@@ -58,13 +58,13 @@ def data_over_time(df , col) :
     return over_time
 
 
-def most_successful(df, sport):
+def most_successful(df):
     # Drop rows where Medal is NaN
     temp_df = df.dropna(subset=['Medal'])
 
     # Filter by sport if specified
-    if sport != 'Overall':
-        temp_df = temp_df[temp_df['Sport'] == sport]
+
+
 
     # Count the occurrences of each athlete in 'Name' column
     top_athletes = temp_df['Name'].value_counts().reset_index()
@@ -75,14 +75,71 @@ def most_successful(df, sport):
 
     # Remove duplicate entries for each athlete
     x.rename(columns={'count': 'Medals'}, inplace=True)
+    t = temp_df.groupby('Name')['Medal'].value_counts().reset_index()
+
+    g = t[t['Medal'] == 'Gold']
+    s = t[t['Medal'] == 'Silver']
+    b = t[t['Medal'] == 'Bronze']
+
+    x = x.merge(g, on='Name', how='left')[['Name', 'count', 'Medals', 'Sport', 'region']]
+    x.rename(columns={'count': 'Gold Medals', 'Medals': 'Total Medals'}, inplace=True)
+    x = x.merge(s, on='Name', how='left')[['Name', 'Gold Medals', 'count', 'Total Medals', 'Sport', 'region']]
+    x.rename(columns={'count': 'Silver Medals'}, inplace=True)
+    x = x.merge(b, on='Name', how='left')[['Name', 'Gold Medals', 'Silver Medals', 'count', 'Total Medals', 'Sport', 'region']]
+    x.rename(columns={'count': 'Bronze Medals'}, inplace=True)
+    x = x.fillna('0')
+    x['Gold Medals'] = x['Gold Medals'].astype('int')
+    x['Bronze Medals'] = x['Bronze Medals'].astype('int')
+    x['Silver Medals'] = x['Silver Medals'].astype('int')
     return x
 
 
-def year_wise_medal_tally(df , country):
+def most_successfuls(df, sport):
     temp_df = df.dropna(subset=['Medal'])
-    temp_df.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'], inplace=True)
-    new_df = temp_df[temp_df['region'] == country]
-    final_df = new_df.groupby('Year').count()['Medal'].reset_index()
+
+    # Count the occurrences of each athlete in 'Name' column
+    temp_df = temp_df[temp_df['Sport'] == sport]
+    x = temp_df['Name'].value_counts().reset_index()
+    x = x.head(15).merge(df, on='Name', how='left')[['Name', 'count', 'region']].drop_duplicates('Name')
+    x.rename(columns={'count': 'Medals'}, inplace=True)
+
+    temp_df
+
+    # print(final_df)
+    t = temp_df.groupby('Name')['Medal'].value_counts().reset_index()
+
+    g = t[t['Medal'] == 'Gold']
+    s = t[t['Medal'] == 'Silver']
+    b = t[t['Medal'] == 'Bronze']
+
+    x = x.merge(g, on='Name', how='left')[['Name', 'count', 'Medals', 'region']]
+    x.rename(columns={'count': 'Gold Medals', 'Medals': 'Total Medals'}, inplace=True)
+    x = x.merge(s, on='Name', how='left')[['Name', 'Gold Medals', 'count', 'Total Medals', 'region']]
+    x.rename(columns={'count': 'Silver Medals'}, inplace=True)
+    x = x.merge(b, on='Name', how='left')[['Name', 'Gold Medals', 'Silver Medals', 'count', 'Total Medals', 'region']]
+    x.rename(columns={'count': 'Bronze Medals'}, inplace=True)
+    x = x.fillna('0')
+    x['Gold Medals'] = x['Gold Medals'].astype('int')
+    x['Bronze Medals'] = x['Bronze Medals'].astype('int')
+    x['Silver Medals'] = x['Silver Medals'].astype('int')
+    return x
+
+
+def year_wise_medal_tally(df , country , medal):
+    if medal == 'Overall':
+        temp_df = df.dropna(subset=['Medal'])
+        temp_df.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'], inplace=True)
+        new_df = temp_df[temp_df['region'] == country]
+        final_df = new_df.groupby('Year').count()['Medal'].reset_index()
+    else :
+        temp_df = df.dropna(subset=['Medal'])
+        temp_df.drop_duplicates(subset=['Team', 'NOC', 'Games', 'Year', 'City', 'Sport', 'Event', 'Medal'],
+                                inplace=True)
+        new_df = temp_df[temp_df['region'] == country]
+        final_df = new_df.groupby('Year')['Medal'].value_counts().reset_index()
+        final_df = final_df[final_df['Medal'] == medal]
+
+
     return final_df
 
 
@@ -124,6 +181,17 @@ def weight_v_heght(df , sport):
 
 def men_vs_women(df):
     athlete_df = df.drop_duplicates(subset=['Name', 'region'])
+    men = athlete_df[athlete_df['Sex'] == 'M'].groupby('Year').count()['Name'].reset_index()
+    women = athlete_df[athlete_df['Sex'] == 'F'].groupby('Year').count()['Name'].reset_index()
+    final = men.merge(women, on='Year', how='left')
+    final.rename(columns={'Name_x': 'Male', 'Name_y': 'Female'}, inplace=True)
+    final.fillna(0, inplace=True)
+    return final
+
+
+def gender_participation(df , country):
+    athlete_df = df.drop_duplicates(subset=['Name', 'region'])
+    athlete_df = athlete_df[athlete_df['region'] == country]
     men = athlete_df[athlete_df['Sex'] == 'M'].groupby('Year').count()['Name'].reset_index()
     women = athlete_df[athlete_df['Sex'] == 'F'].groupby('Year').count()['Name'].reset_index()
     final = men.merge(women, on='Year', how='left')

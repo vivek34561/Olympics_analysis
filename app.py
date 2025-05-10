@@ -11,7 +11,7 @@ region_df =  pd.read_csv(r"C:\Users\vivek gupta\Downloads\noc_regions.csv")
 df = preprocessor.preprocess(df , region_df)
 
 st.sidebar.title("Olympics Analysis")
-st.sidebar.image('https://files.oaiusercontent.com/file-eE7Ik8fNpGhne19sDQhdq3Uc?se=2024-11-10T03%3A26%3A09Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3Db88cb0bd-ea25-4106-ae17-5d19e55cd7fd.webp&sig=lIC4tKbeA6xJFcvN052rCxyQFSSx40SZtsBv3QDnLgs%3D')
+st.sidebar.image('https://www.australiantimes.co.uk/wp-content/uploads/2021/07/Olympics-Image-by-Gerhard-G.-from-Pixabay--1200x858.jpg')
 user_menu = st.sidebar.radio(
     'Select an Option',
     ('Medal Tally' , 'Overall Analysis' , 'Country-wise Analysis' , 'Athlete wise Analysis')
@@ -37,6 +37,7 @@ if user_menu  == 'Medal Tally':
 
 
 
+
 if user_menu == 'Overall Analysis':
     editions = df['Year'].unique().shape[0] - 1
     cities = df['City'].unique().shape[0]
@@ -48,24 +49,24 @@ if user_menu == 'Overall Analysis':
     st.title("Top Statistics")
     col1 , col2 , col3 = st.columns(3)
     with col1:
-        st.header("Editions")
+        st.header("Total Olympics")
         st.title(editions)
     with col2:
-        st.header("Hosts")
+        st.header("Hosted cities")
         st.title(cities)
     with col3:
-        st.header("Sports")
+        st.header("Total different Sports")
         st.title(sports)
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.header("Events")
+        st.header("Total Events")
         st.title(events)
     with col2:
-        st.header("Nations")
+        st.header("Total Nations Participated")
         st.title(nations)
     with col3:
-        st.header("Athletes")
+        st.header("Total Athletes Participated")
         st.title(athletes)
     nations_over_time = helper.data_over_time(df , 'region')
     fig = px.line(nations_over_time, x='Edition', y = 'region')
@@ -79,7 +80,7 @@ if user_menu == 'Overall Analysis':
 
     athlete_over_time = helper.data_over_time(df, 'Name')
     fig = px.line(athlete_over_time, x='Edition', y='Name')
-    st.title("Athelete Over the Years")
+    st.title("Athelete Participating Over the Years")
     st.plotly_chart(fig)
 
     st.title("No.of Events over time(Every Sports")
@@ -95,9 +96,10 @@ if user_menu == 'Overall Analysis':
     sport_list.sort()
     sport_list.insert(0 , 'Overall')
     selected_sport = st.selectbox('Select a Sport' , sport_list)
-
-
-    x = helper.most_successful(df , selected_sport)
+    if selected_sport == 'Overall':
+        x = helper.most_successful(df)
+    else :
+        x = helper.most_successfuls(df, selected_sport)
     st.table(x)
 
 
@@ -108,9 +110,19 @@ if user_menu == 'Country-wise Analysis':
     Selected_country = st.sidebar.selectbox('Select a Country' , country_list)
 
 
-    country_df = helper.year_wise_medal_tally(df , Selected_country)
-    fig = px.line(country_df, x='Year', y='Medal')
+
     st.title(Selected_country + " Medal Tally Over the Years")
+    temp_df = df.dropna(subset=['Medal'])
+    medal_list = temp_df['Medal'].unique().tolist()
+    medal_list.insert(0, 'Overall')
+    selected_medal = st.selectbox('Select medal', medal_list)
+    country_df = helper.year_wise_medal_tally(df , Selected_country , selected_medal)
+    if selected_medal == 'Overall':
+        fig = px.line(country_df, x='Year', y='Medal')
+    else :
+        fig = px.line(country_df, x='Year', y='count')
+
+
     st.plotly_chart(fig)
 
     st.title(Selected_country + " Excel in the Following Sports")
@@ -119,7 +131,15 @@ if user_menu == 'Country-wise Analysis':
     ax = sns.heatmap(pt , annot = True)
     st.pyplot(fig)
 
-    st.title('Top 10 Athletes of ' , Selected_country)
+
+    st.title('Male vs Female Participation in ' + Selected_country + ' Over the Year')
+    final = helper.gender_participation(df , Selected_country)
+    fig = px.line(final, x="Year", y=["Male", "Female"])
+    fig.update_layout(autosize=False, width=1000, height=600)
+    st.plotly_chart(fig)
+
+
+    st.title('Top 10 Athletes of ' + Selected_country)
     top10_df = helper.most_successful_countrywise(df , Selected_country)
     st.table(top10_df)
 
