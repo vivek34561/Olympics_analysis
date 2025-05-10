@@ -1,4 +1,4 @@
-🏅 Olympics Data Analysis Project
+#🏅 Olympics Data Analysis Project
 Welcome to the Olympics Data Analysis Project! This project was inspired by the excitement and global unity brought about by the ongoing Olympics. 
 As a passionate data enthusiast, I sought to channel my skills into a project that not only celebrates the spirit of the Olympics but also showcases 
 my capabilities in data analysis, visualization, and storytelling.
